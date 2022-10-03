@@ -1,0 +1,5 @@
+*.xlsx
+/__pycache__
+*.html
+constants.py
+pruebas.py
