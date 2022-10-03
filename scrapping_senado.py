@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup, element
 import pandas as pd
 import requests
-import pruebas
 from constants import *
 
 __author__ = 'Forbidden'
@@ -30,20 +29,35 @@ def getTextInTag(content):
         print("Item de tipo inesperado")
         return None
 
+def cell_info_getter(tag):
+    text = getTextInTag(tag)
+    if not text[-3:]== '...': return text
+    if not tag.contents: return text
+    if not tag.contents[0].name == 'a': return text
+    a_tag = tag.contents[0]
+    get_req_expediente = BASE_URL_GET+a_tag.attrs.get('href') 
+    response = start_session_and_make_request(LOG_IN_URL, {}, get_req_expediente)
+    temp_html = 'temp.html'
+    writeHTML(response.text, temp_html)
+    return get_full_title(temp_html)
+
 def start_session_and_make_request(login_url, credentials, get_url):
     with requests.session() as s:
         s.post(login_url, credentials)
         r = s.get(get_url)
         return r
 
-def get_full_title(tag):
-    pass
+def get_full_title(html_page):
+    with open(html_page, 'r', encoding='utf8') as html_file:
+        content = html_file.read()
+        soup = BeautifulSoup(content, 'lxml')
+        return soup.find('textarea', {'id': 'campos_nota_630'}).text   
 
 def get_project_descrition_from_response(response):
-    pruebas.writeHTML(response.text, 'temp-pagina.html')
+    writeHTML(response.text, 'temp-pagina.html')
 
-def table_scrapper(pagina):    
-    with open(pagina, 'r', encoding='utf8') as html_file:
+def table_scrapper(html_file_name) -> pd.DataFrame:
+    with open(html_file_name, 'r', encoding='utf8') as html_file:
         content = html_file.read()
         soup = BeautifulSoup(content, 'lxml')
         #DtgExpedientes
@@ -56,14 +70,20 @@ def table_scrapper(pagina):
                     if tag.attrs.get('class'):
                         if 'cabezaTabla' in tag.attrs.get('class') and not columns:
                             columns = [item_in_tag.contents[0] for item_in_tag in tag.contents if type(item_in_tag)==element.Tag]
-                        elif 'linea_gris' in tag.attrs.get('class'):
-                            data.append([getTextInTag(child_tag) for child_tag in tag.contents if type(child_tag)==element.Tag])
+                        else:
+                            data.append([cell_info_getter(child_tag) for child_tag in tag.contents if type(child_tag)==element.Tag])
+                else:
+                    data.append([cell_info_getter(child_tag) for child_tag in tag.contents if type(child_tag)==element.Tag])
         if columns:
-            df = pd.DataFrame(data, columns=columns)
-            df.to_excel('otro_excel.xlsx', index=False, header=True)
+            return pd.DataFrame(data, columns=columns)
+            #df.to_excel(excel_file_name, index=False, header=True)
+        else:
+            return None
+
+def writeXSLS(xlsx_filename: str, df: pd.DataFrame):
+    df.to_excel(xlsx_filename, index=False, header=True)
 
 def writeHTML(text, filename):
     f = open(filename, "w", encoding='utf-8')
     f.write(text)
     f.close()
-
