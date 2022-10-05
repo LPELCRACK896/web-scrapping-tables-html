@@ -12,7 +12,6 @@ __maintainer__ = 'Fordidden'
 __email__ = 'luispedev@gmail.com'
 __status__ = 'Available and ready.'
 
-
 tildesParser = lambda text : text.replace('&#243;', 'ó').replace('&#237;', 'í').replace('&#218;', 'Ú').replace('&#225;', 'á').replace('&#250;', 'ú') 
 
 def getTextInTag(content):
@@ -31,6 +30,7 @@ def getTextInTag(content):
 
 def cell_info_getter(tag):
     text = getTextInTag(tag)
+    if not text: return None
     if not text[-3:]== '...': return text
     if not tag.contents: return text
     if not tag.contents[0].name == 'a': return text
@@ -64,7 +64,17 @@ def table_scrapper(html_file_name) -> pd.DataFrame:
         table = soup.find('table', {'id': 'DtgExpedientes'})
         columns = []
         data = []
-        for tag in table.contents:
+        contenido = table.contents
+        redefined = False
+        cont = 0
+        while not redefined and not cont>len(table.contents):
+            if type(table.contents[cont])==element.Tag:
+                if table.contents[cont].name == 'tbody':
+                    contenido = table.contents[cont]
+                    redefined = True
+            cont += 1
+
+        for tag in contenido:
             if type(tag)==element.Tag:
                 if tag.attrs:
                     if tag.attrs.get('class'):
@@ -82,6 +92,12 @@ def table_scrapper(html_file_name) -> pd.DataFrame:
 
 def writeXSLS(xlsx_filename: str, df: pd.DataFrame):
     df.to_excel(xlsx_filename, index=False, header=True)
+
+def check_if_next(html_file_name):
+    pass
+
+def checi_if_previous(html_file_name):
+    pass
 
 def writeHTML(text, filename):
     f = open(filename, "w", encoding='utf-8')
