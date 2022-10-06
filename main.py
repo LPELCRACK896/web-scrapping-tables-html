@@ -2,6 +2,16 @@ from scrapping_senado import *
 from constants import *
 from explore_all_pages_sel import *
 import pandas as pd
+
+__author__ = "fualp-dev"
+__copyright__ = "Copyright 2022, The Fualp Dev"
+__credits__ = ["fualp-dev"]
+__license__ = "GPL"
+__version__ = "1.0.0"
+__maintainer__ = "fualp-dev"
+__email__ = "luispedev@gmail.com"
+__status__ = "Finished"
+
 html_file_name = 'pagina.html'
 xlsx_file_name = 'pruebas2.xlsx'
 df = pd.DataFrame()
